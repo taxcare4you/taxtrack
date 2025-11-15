@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function Home() {
-  // Server-side redirect to the dashboard route
+  // Redirect root to dashboard
   redirect('/dashboard');
 }
