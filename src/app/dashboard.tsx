@@ -1,8 +1,9 @@
 'use client';
+
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getUser } from '@/utils/getUser';
 import DashboardTabs from '@/components/DashboardTabs';
@@ -40,7 +41,7 @@ type Expense = {
   created_at: string;
 };
 
-export default function TestPage() {
+export default function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -51,11 +52,12 @@ export default function TestPage() {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-      window.location.href = '/auth/login';
+      router.push('/auth/login');
     }
   };
 
   const fetchData = async () => {
+    setLoading(true);
     const user = await getUser();
     if (!user) {
       router.push('/auth/login');
@@ -64,29 +66,33 @@ export default function TestPage() {
 
     setUserId(user.id);
 
-    const { data: bizData } = await supabase
+    const { data: bizData, error: bizError } = await supabase
       .from('business')
       .select('*')
       .eq('user_id', user.id);
-    if (bizData) setBusinesses(bizData);
+    if (bizError) console.error('business fetch error', bizError);
+    if (bizData) setBusinesses(bizData as Business[]);
 
-    const { data: catData } = await supabase
+    const { data: catData, error: catError } = await supabase
       .from('category')
       .select('*')
       .eq('user_id', user.id);
-    if (catData) setCategories(catData);
+    if (catError) console.error('category fetch error', catError);
+    if (catData) setCategories(catData as Category[]);
 
-    const { data: expData } = await supabase
+    const { data: expData, error: expError } = await supabase
       .from('expense')
       .select('*')
       .eq('user_id', user.id);
-    if (expData) setExpenses(expData);
+    if (expError) console.error('expense fetch error', expError);
+    if (expData) setExpenses(expData as Expense[]);
 
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <p style={{ padding: '2rem' }}>🔐 Checking authentication...</p>;
@@ -111,14 +117,11 @@ export default function TestPage() {
         </button>
       </div>
 
-      <p><strong>User ID:</strong> {userId}</p>
+      <p>
+        <strong>User ID:</strong> {userId}
+      </p>
 
-      <DashboardTabs
-        businesses={businesses}
-        categories={categories}
-        expenses={expenses}
-        refresh={fetchData}
-      />
+      <DashboardTabs businesses={businesses} categories={categories} expenses={expenses} refresh={fetchData} />
 
       <ReportDashboard />
 
