@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 type Category = {
@@ -18,6 +18,17 @@ export default function EditableCategoryList({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSessionUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUserId(session?.user?.id ?? null);
+    };
+    getSessionUser();
+  }, []);
 
   const startEdit = (cat: Category) => {
     setEditingId(cat.id);
@@ -30,11 +41,12 @@ export default function EditableCategoryList({
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    if (!editingId || !userId) return;
     const { error } = await supabase
       .from('category')
       .update({ name: newName })
-      .eq('id', editingId);
+      .eq('id', editingId)
+      .eq('user_id', userId); // ✅ Scoped update
     if (!error) {
       cancelEdit();
       refresh();
@@ -42,10 +54,12 @@ export default function EditableCategoryList({
   };
 
   const toggleActive = async (cat: Category) => {
+    if (!userId) return;
     const { error } = await supabase
       .from('category')
       .update({ is_active: !cat.is_active })
-      .eq('id', cat.id);
+      .eq('id', cat.id)
+      .eq('user_id', userId); // ✅ Scoped update
     if (!error) refresh();
   };
 

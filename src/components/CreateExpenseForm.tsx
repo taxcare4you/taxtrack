@@ -1,8 +1,7 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { getUser } from '@/utils/getUser';
+import { createClient } from '@/utils/supabase/client';
 
 type Business = {
   id: string;
@@ -15,6 +14,8 @@ type Category = {
 };
 
 export default function CreateExpenseForm() {
+  const supabase = createClient();
+
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState('CAD');
@@ -25,22 +26,28 @@ export default function CreateExpenseForm() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOptions = async () => {
-      const user = await getUser();
-      if (!user) return;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const uid = session?.user?.id;
+      if (!uid) return;
+      setUserId(uid);
 
       const { data: bizData } = await supabase
         .from('business')
         .select('id, name')
-        .eq('user_id', user.id);
+        .eq('user_id', uid);
       setBusinesses(bizData || []);
 
       const { data: catData } = await supabase
         .from('category')
         .select('id, name')
-        .eq('user_id', user.id);
+        .eq('user_id', uid);
       setCategories(catData || []);
     };
 
@@ -50,23 +57,24 @@ export default function CreateExpenseForm() {
   const handleCreate = async () => {
     setMessage('');
     setError('');
-    const user = await getUser();
-    if (!user) {
+    if (!userId) {
       setError('User not logged in');
       return;
     }
 
     const { error: insertError } = await supabase
       .from('expense')
-      .insert([{
-        user_id: user.id,
-        business_id: businessId,
-        category_id: categoryId,
-        description,
-        amount,
-        currency,
-        date,
-      }]);
+      .insert([
+        {
+          user_id: userId,
+          business_id: businessId,
+          category_id: categoryId,
+          description,
+          amount,
+          currency,
+          date,
+        },
+      ]);
 
     if (insertError) {
       setError(insertError.message);
@@ -89,7 +97,7 @@ export default function CreateExpenseForm() {
         type="text"
         placeholder="Description"
         value={description}
-        onChange={e => setDescription(e.target.value)}
+        onChange={(e) => setDescription(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       />
 
@@ -97,7 +105,7 @@ export default function CreateExpenseForm() {
         type="number"
         placeholder="Amount"
         value={amount}
-        onChange={e => setAmount(parseFloat(e.target.value))}
+        onChange={(e) => setAmount(parseFloat(e.target.value))}
         style={{ marginBottom: '1rem', width: '100%' }}
       />
 
@@ -105,36 +113,40 @@ export default function CreateExpenseForm() {
         type="text"
         placeholder="Currency (e.g. CAD)"
         value={currency}
-        onChange={e => setCurrency(e.target.value)}
+        onChange={(e) => setCurrency(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       />
 
       <input
         type="date"
         value={date}
-        onChange={e => setDate(e.target.value)}
+        onChange={(e) => setDate(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       />
 
       <select
         value={businessId || ''}
-        onChange={e => setBusinessId(e.target.value)}
+        onChange={(e) => setBusinessId(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       >
         <option value="">Select Business</option>
-        {businesses.map(biz => (
-          <option key={biz.id} value={biz.id}>{biz.name}</option>
+        {businesses.map((biz) => (
+          <option key={biz.id} value={biz.id}>
+            {biz.name}
+          </option>
         ))}
       </select>
 
       <select
         value={categoryId || ''}
-        onChange={e => setCategoryId(e.target.value)}
+        onChange={(e) => setCategoryId(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       >
         <option value="">Select Category</option>
-        {categories.map(cat => (
-          <option key={cat.id} value={cat.id}>{cat.name}</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.name}
+          </option>
         ))}
       </select>
 

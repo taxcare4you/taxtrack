@@ -1,33 +1,32 @@
 {
   "name": "taxtrack",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/auth-ui-react": "^0.4.7",
-    "@supabase/auth-ui-shared": "^0.1.8",
-    "@supabase/supabase-js": "^2.81.1",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.39.5",
     "chart.js": "^4.5.1",
     "jspdf": "^3.0.3",
-    "next": "16.0.3",
-    "react": "19.2.0",
+    "next": "^16.0.3",
+    "react": "18.2.0",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.0"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^20.8.10",
+    "@types/react": "^18.2.21",
+    "autoprefixer": "^10.4.22",
+    "eslint": "8.49.0",
+    "eslint-config-next": "13.4.19",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.2.2"
   }
 }

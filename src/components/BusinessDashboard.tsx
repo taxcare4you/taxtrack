@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { getUser } from '@/utils/getUser';
+import { getSessionUser } from '@/utils/getSession';
 
 export default function BusinessDashboard() {
   const [summary, setSummary] = useState<
@@ -10,7 +10,8 @@ export default function BusinessDashboard() {
   >([]);
 
   const fetchSummary = async () => {
-    const user = await getUser();
+    const user = await getSessionUser();
+
     if (!user) return;
 
     const { data, error } = await supabase.rpc('get_business_summary', {

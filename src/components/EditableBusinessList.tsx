@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 type Business = {
@@ -18,6 +18,17 @@ export default function EditableBusinessList({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSessionUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUserId(session?.user?.id ?? null);
+    };
+    getSessionUser();
+  }, []);
 
   const startEdit = (biz: Business) => {
     setEditingId(biz.id);
@@ -30,11 +41,12 @@ export default function EditableBusinessList({
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    if (!editingId || !userId) return;
     const { error } = await supabase
       .from('business')
       .update({ name: newName })
-      .eq('id', editingId);
+      .eq('id', editingId)
+      .eq('user_id', userId); // ✅ Scoped update
     if (!error) {
       cancelEdit();
       refresh();
@@ -42,10 +54,12 @@ export default function EditableBusinessList({
   };
 
   const toggleActive = async (biz: Business) => {
+    if (!userId) return;
     const { error } = await supabase
       .from('business')
       .update({ is_active: !biz.is_active })
-      .eq('id', biz.id);
+      .eq('id', biz.id)
+      .eq('user_id', userId); // ✅ Scoped update
     if (!error) refresh();
   };
 

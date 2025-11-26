@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { getUser } from '@/utils/getUser';
+import { getSessionUser } from '@/utils/getSession';
 import { Chart } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
 import {
   Chart as ChartJS,
+  BarController,
   BarElement,
+  LineController,
   LineElement,
   PointElement,
   CategoryScale,
@@ -15,17 +17,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-
-ChartJS.register(
-  BarElement,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend
-);
-
 type Summary = {
   category?: string;
   business?: string;
@@ -46,7 +37,7 @@ export default function ReportDashboard() {
   const [selectedCurrency, setSelectedCurrency] = useState('');
 
   const fetchFilters = async () => {
-    const user = await getUser();
+    const user = await getSessionUser();
     if (!user) return;
 
     const [bizRes, catRes] = await Promise.all([
@@ -59,7 +50,7 @@ export default function ReportDashboard() {
   };
 
   const fetchAll = async () => {
-    const user = await getUser();
+    const user = await getSessionUser();
     if (!user) return;
 
     const [catRes, bizRes, trendRes] = await Promise.all([

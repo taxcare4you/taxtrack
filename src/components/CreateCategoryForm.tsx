@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { getUser } from '@/utils/getUser';
+import { getSessionUser } from '@/utils/getSession';
 
 export default function CreateCategoryForm() {
   const [name, setName] = useState('');
@@ -12,7 +12,8 @@ export default function CreateCategoryForm() {
   const handleCreate = async () => {
     setMessage('');
     setError('');
-    const user = await getUser();
+    const user = await getSessionUser();
+
     if (!user) {
       setError('User not logged in');
       return;

@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { getUser } from '@/utils/getUser';
+import { createClient } from '@/utils/supabase/client';
 
 export default function CreateBusinessForm() {
+  const supabase = createClient();
+
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -12,15 +13,20 @@ export default function CreateBusinessForm() {
   const handleCreate = async () => {
     setMessage('');
     setError('');
-    const user = await getUser();
-    if (!user) {
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const userId = session?.user?.id;
+    if (!userId) {
       setError('User not logged in');
       return;
     }
 
     const { error: insertError } = await supabase
       .from('business')
-      .insert([{ name, user_id: user.id }]);
+      .insert([{ name, user_id: userId }]);
 
     if (insertError) {
       setError(insertError.message);
@@ -37,7 +43,7 @@ export default function CreateBusinessForm() {
         type="text"
         placeholder="Business Name"
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
         style={{ marginBottom: '1rem', width: '100%' }}
       />
       <button onClick={handleCreate}>Create</button>
