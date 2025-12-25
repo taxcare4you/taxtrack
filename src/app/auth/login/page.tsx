@@ -2,102 +2,113 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function AuthPage() {
-  const supabase = createClientComponentClient();
   const router = useRouter();
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  async function handleAuth(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setErrorMessage('');
 
-    if (mode === 'signin') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (mode === 'login') {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Sign in successful! Redirecting...');
-        router.replace('/dashboard'); // ✅ direct redirect
+        setErrorMessage(error.message);
+        return;
       }
-    } else {
-      const { error } = await supabase.auth.signUp({ email, password });
+
+      router.push('/dashboard');
+    }
+
+    if (mode === 'signup') {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
       if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Sign up successful! Redirecting...');
-        router.replace('/dashboard'); // ✅ direct redirect
+        setErrorMessage(error.message);
+        return;
       }
+
+      // After signup, redirect to dashboard or login
+      router.push('/dashboard');
     }
   }
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>TaxTrack Auth</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <h1 className="text-xl font-semibold text-center">
+          {mode === 'login' ? 'Sign In' : 'Create Account'}
+        </h1>
 
-      <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <input
           type="email"
           placeholder="Email"
+          className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{ padding: 8, border: '1px solid #ccc', borderRadius: 4 }}
         />
+
         <input
           type="password"
           placeholder="Password"
+          className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{ padding: 8, border: '1px solid #ccc', borderRadius: 4 }}
         />
+
+        {errorMessage && (
+          <p className="text-red-500 text-sm">{errorMessage}</p>
+        )}
+
         <button
           type="submit"
-          style={{
-            padding: 10,
-            background: '#0070f3',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
+          className="w-full bg-blue-600 text-white p-2 rounded"
         >
-          {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+          {mode === 'login' ? 'Sign In' : 'Sign Up'}
         </button>
+
+        <p className="text-center text-sm text-gray-600">
+          {mode === 'login' ? (
+            <>
+              Don’t have an account?{' '}
+              <span
+                className="text-blue-600 cursor-pointer"
+                onClick={() => setMode('signup')}
+              >
+                Sign up
+              </span>
+            </>
+          ) : (
+            <>
+              Already have an account?{' '}
+              <span
+                className="text-blue-600 cursor-pointer"
+                onClick={() => setMode('login')}
+              >
+                Sign in
+              </span>
+            </>
+          )}
+        </p>
       </form>
-
-      {error && <p style={{ color: 'red', marginTop: 12 }}>{error}</p>}
-      {success && <p style={{ color: 'green', marginTop: 12 }}>{success}</p>}
-
-      <p style={{ marginTop: 16 }}>
-        {mode === 'signin' ? (
-          <>
-            Don’t have an account?{' '}
-            <button
-              onClick={() => setMode('signup')}
-              style={{ color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Sign Up
-            </button>
-          </>
-        ) : (
-          <>
-            Already have an account?{' '}
-            <button
-              onClick={() => setMode('signin')}
-              style={{ color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Sign In
-            </button>
-          </>
-        )}
-      </p>
-    </main>
+    </div>
   );
 }
